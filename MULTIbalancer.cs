@@ -1,4 +1,4 @@
-﻿/* MULTIbalancer.cs
+/* MULTIbalancer.cs
 
 Copyright 2013, by PapaCharlie9
 `   
@@ -237,6 +237,8 @@ public class MULTIbalancer : PRoConPluginAPI, IPRoConPluginInterface
                     Stage3TicketPercentageToUnstackAdjustment = 80;
                     Stage4And5TicketPercentageToUnstackAdjustment = -120;
                     SecondsToCheckForNewStage = 10;
+					MinimumCorrectionFactor = 0.6;
+					MinimumAttackerTicketsLostPerStage = 0.45;
                     break;
                 case "Squad Deathmatch":
                     MaxPlayers = (isBF4) ? 20 : 16;
@@ -291,7 +293,9 @@ public class MULTIbalancer : PRoConPluginAPI, IPRoConPluginInterface
                     Stage3TicketPercentageToUnstackAdjustment = 80;
                     Stage4And5TicketPercentageToUnstackAdjustment = -120;
                     SecondsToCheckForNewStage = 10;
-                    break;
+					MinimumCorrectionFactor = 0.60;
+					MinimumAttackerTicketsLostPerStage = 0.45; 
+					break;
                 case "Gun Master":
                     MaxPlayers = 16;
                     CheckTeamStackingAfterFirstMinutes = 2;
@@ -373,7 +377,9 @@ public class MULTIbalancer : PRoConPluginAPI, IPRoConPluginInterface
         public double Stage3TicketPercentageToUnstackAdjustment = 0;
         public double Stage4And5TicketPercentageToUnstackAdjustment = 0;
         public double SecondsToCheckForNewStage = 10;
-        
+		public double MinimumCorrectionFactor = 0.25;
+		public double MinimumAttackerTicketsLostPerStage = 0.50;
+		        
         public bool isDefault = true; // not a setting
     } // end PerModeSettings
 
@@ -962,6 +968,7 @@ private List<String> fAllFriends;
 private List<DelayedRequest> fTimerRequestList = null;
 private DateTime fLastValidationTimestamp;
 private int[] fFactionByTeam = null;
+private double CorrectionFactor = 1;
 
 // Operational statistics
 private int fReassignedRound = 0;
@@ -1242,6 +1249,7 @@ public MULTIbalancer() {
     fRevealSettings = false;
     fShowRiskySettings = false;
     fLastFastMoveTimestamp = DateTime.MinValue;
+	CorrectionFactor = 1;
     
     /* Settings */
 
@@ -1996,6 +2004,10 @@ public List<CPluginVariable> GetDisplayPluginVariables() {
                 lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Stage 4 And 5 Ticket Percentage To Unstack Adjustment", oneSet.Stage4And5TicketPercentageToUnstackAdjustment.GetType(), oneSet.Stage4And5TicketPercentageToUnstackAdjustment));
                 
                 lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Seconds To Check For New Stage", oneSet.SecondsToCheckForNewStage.GetType(), oneSet.SecondsToCheckForNewStage));
+				
+				lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Minimum Correction Factor", oneSet.MinimumCorrectionFactor.GetType(), oneSet.MinimumCorrectionFactor));
+				
+				lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Minimum Attacker Tickets Lost Per Stage", oneSet.MinimumAttackerTicketsLostPerStage.GetType(), oneSet.MinimumAttackerTicketsLostPerStage));
             }
 
             if (isConquest) {
@@ -2425,10 +2437,14 @@ private bool ValidateSettings(String strVariable, String strValue) {
                     ConsoleError("^b" + "Definition Of Early Phase" + "^n must be less than or equal to " + (maxMinutes - perMode.DefinitionOfLatePhaseFromEnd) + " minutes, corrected to " + (maxMinutes - perMode.DefinitionOfLatePhaseFromEnd));
                     perMode.DefinitionOfEarlyPhaseFromStart = maxMinutes - perMode.DefinitionOfLatePhaseFromEnd;
                 }
-            } else if (mode == "Rush" || mode == "Squad Rush") {
-                if (strVariable.Contains("Seconds To Check For New Stage")) ValidateDoubleRange(ref perMode.SecondsToCheckForNewStage, mode + ":" + "Seconds To Check For New Stage", 5, 30, def.SecondsToCheckForNewStage, false);
+            } 
+			else if (mode == "Rush" || mode == "Squad Rush") {
+				if (strVariable.Contains("Seconds To Check For New Stage")) ValidateDoubleRange(ref perMode.SecondsToCheckForNewStage, mode + ":" + "Seconds To Check For New Stage", 5, 30, def.SecondsToCheckForNewStage, false);
+				else if (strVariable.Contains("Minimum Correction Factor")) ValidateDoubleRange(ref perMode.MinimumCorrectionFactor, mode + ":" + "Minimum Correction Factor", 0.1, 1.0, def.MinimumCorrectionFactor, false);
+				else if (strVariable.Contains("Minimum Attacker Tickets Lost Per Stage")) ValidateDoubleRange(ref perMode.MinimumAttackerTicketsLostPerStage, mode + ":" + "Minimum Attacker Tickets Lost Per Stage", 0, 0.9, def.MinimumAttackerTicketsLostPerStage, false);
             }
         }
+		
 
         /* ===== SECTION 9 - Debug Settings ===== */
 
@@ -4038,6 +4054,9 @@ public override void OnServerInfo(CServerInfo serverInfo) {
                 if (attacker < fRushPrevAttackerTickets && attacker > 0) {
                     fRushAttackerStageLoss = fRushAttackerStageLoss + (fRushPrevAttackerTickets - attacker);
                     ++fRushAttackerStageSamples;
+					// Disable Correction Factor when attackers have lost the minimum tickets on the new stage
+					if (fRushPrevAttackerTickets <= (fMaxTickets * (1-perMode.MinimumAttackerTicketsLostPerStage)))
+					CorrectionFactor = 1;
                 }
             }
             String avl = String.Empty;
@@ -4084,10 +4103,19 @@ public override void OnServerInfo(CServerInfo serverInfo) {
                     DebugWrite("^7serverInfo: stage " + fRushStage + " in progress!", 7);
                 }
             } else if (attacker > fRushPrevAttackerTickets
-            && (attacker - fRushPrevAttackerTickets) >= Math.Min(12, 2 * perMode.SecondsToCheckForNewStage / 5)
-            && AttackerTicketsWithinRangeOfMax(attacker) 
+            && (attacker - fRushPrevAttackerTickets) >= Math.Min(12, 2 * perMode.SecondsToCheckForNewStage / 5) // might be not 100% reliable, not every new stage can be detected
             && fRushStage < 5) {
                 fStageInProgress = false;
+				
+				// Check Minimum Ticket lost
+				if (fRushPrevAttackerTickets >= (fMaxTickets * (1-perMode.MinimumAttackerTicketsLostPerStage))) {  // Example: MinimumAttackerTicketsLostPerStage = 0.9 means Attackers have lost 90% of their tickets --> (100%-90%)= 10% remains
+					CorrectionFactor = perMode.MinimumCorrectionFactor + (( (fMaxTickets - fRushPrevAttackerTickets) / (fMaxTickets * perMode.MinimumAttackerTicketsLostPerStage))*(1-perMode.MinimumCorrectionFactor));
+					CorrectionFactor =  Math.Round(CorrectionFactor, 2);
+					// Extreme Case 1: Attackers have lost "MinimumAttackerTicketsLostPerStage" tickets in a stage or more --- > Correction Factor = 1 ---> Defender tickets will not be changed
+					// Extreme Case 2: Attackers have lost 0 tickets in a stage	--- > Correction Factor = MinimumCorrectionFactor (Def 0.25) ---> Defender tickets will be changed to 0.25 * MaxTickets on the new stage
+				}
+				else CorrectionFactor = 1;
+				
                 fRushMaxTickets = defender;
                 fMaxTickets = attacker;
                 fRushPrevAttackerTickets = attacker;
@@ -5041,11 +5069,11 @@ private void BalanceAndUnstack(String name) {
             if (IsRush()) {
                 // normalize Rush ticket ratio
                 double attackers = fTickets[1];
-                double defenders = fMaxTickets - (fRushMaxTickets - fTickets[2]);
+                double defenders = Math.Round(CorrectionFactor * (fMaxTickets - (fRushMaxTickets - fTickets[2])),0);
                 defenders = Math.Max(defenders, attackers/2);
                 ratio = (attackers > defenders) ? (attackers/Math.Max(1, defenders)) : (defenders/Math.Max(1, attackers));
                 t1Tickets = attackers;
-                t2Tickets = defenders;
+                t2Tickets = defenders * CorrectionFactor;
             } else {
                 t1Tickets = Convert.ToDouble(fTickets[winningTeam]);
                 t2Tickets = Convert.ToDouble(fTickets[losingTeam]);
@@ -9337,6 +9365,7 @@ private void Reset() {
     fUpdateTicketsRequest = null;
     fTotalRoundEndingRounds = 0;
     fTotalRoundEndingSeconds = 0;
+	CorrectionFactor = 1;
 
     fDebugScramblerBefore[0].Clear();
     fDebugScramblerBefore[1].Clear();
@@ -9392,6 +9421,7 @@ private void ResetRound() {
     fTotalQuits = 0;
     fGrandRageQuits = fGrandRageQuits + fRageQuits;
     fRageQuits = 0;
+	CorrectionFactor = 1;
 
     fLastBalancedTimestamp = DateTime.MinValue;
 
@@ -12765,7 +12795,7 @@ private void UpdateTicketLossRateLog(DateTime now, int strong, int weak) {
         row[5] = fTeam1.Count.ToString();
         row[6] = fTeam2.Count.ToString();
         row[7] = fTickets[1].ToString();
-        row[8] = ((IsRush()) ? Convert.ToInt32(Math.Max(fTickets[1]/2, fMaxTickets - (fRushMaxTickets - fTickets[2]))) : fTickets[2]).ToString();
+        row[8] = ((IsRush()) ? Convert.ToInt32(Math.Max(fTickets[1]/2, Math.Round(CorrectionFactor * (fMaxTickets - (fRushMaxTickets - fTickets[2])),0))) : fTickets[2]).ToString();
         row[9] = perMode.TicketLossSampleCount.ToString();
         double a1 = GetAverageTicketLossRate(1, true);
         row[10] = a1.ToString("F3");
@@ -13185,7 +13215,9 @@ private void LogStatus(bool isFinal, int level) {
 
     String tm = fTickets[1] + "/" + fTickets[2];
     if (IsSQDM()) tm = tm + "/" + fTickets[3] + "/" + fTickets[4];
-    if (IsRush()) tm = tm  + "(" + Math.Max(fTickets[1]/2, fMaxTickets - (fRushMaxTickets - fTickets[2])) + ")";
+    if (IsRush()) {
+		tm = tm  + "(" + Math.Max(fTickets[1]/2, ((fMaxTickets - (fRushMaxTickets - fTickets[2])))) + "[*" + Math.Round(CorrectionFactor * (fMaxTickets - (fRushMaxTickets - fTickets[2])),0) + "*])";
+	}
     if (IsCTF()) tm = GetTeamPoints(1) + "/" + GetTeamPoints(2);
 
     double goal = 0;
@@ -13224,7 +13256,7 @@ private void LogStatus(bool isFinal, int level) {
     if (level >= 6) DebugWrite("^bStatus^n: Plugin state = " + fPluginState + ", game state = " + fGameState + fastBalance + weakOnly + metroAdj + unstackDisabled + logOnly, 0);
     int useLevel = (isFinal) ? 2 : 4;
     if (IsRush()) {
-        if (level >= useLevel) DebugWrite("^bStatus^n: Map = " + this.FriendlyMap + ", mode = " + this.FriendlyMode + ", stage = " + fRushStage + ", time in round = " + rt + ", tickets = " + tm, 0);
+        if (level >= useLevel) DebugWrite("^bStatus^n: Map = " + this.FriendlyMap + ", mode = " + this.FriendlyMode + ", stage = " + fRushStage + ", time in round = " + rt + ", tickets = " + tm + " ,Correction Factor = " + CorrectionFactor , 0);
     } else if (IsCTF()) {
         if (level >= useLevel) DebugWrite("^bStatus^n: Map = " + this.FriendlyMap + ", mode = " + this.FriendlyMode + ", time in round = " + rt + ", points = " + tm, 0);
     } else {
@@ -13232,7 +13264,7 @@ private void LogStatus(bool isFinal, int level) {
     }
 
     int ticketGap = Math.Abs(fTickets[1] - fTickets[2]);
-    if (IsRush()) ticketGap = Convert.ToInt32(Math.Abs(fTickets[1] - Math.Max(fTickets[1]/2, fMaxTickets - (fRushMaxTickets - fTickets[2]))));
+    if (IsRush()) ticketGap = Convert.ToInt32(Math.Abs(fTickets[1] - Math.Max(fTickets[1]/2, Math.Round(CorrectionFactor * (fMaxTickets - (fRushMaxTickets - fTickets[2])),0))));
     if (perMode.EnableTicketLossRatio && false) { // disable for this release
         double a1 = GetAverageTicketLossRate(1, !EnableTicketLossRateLogging);
         double a2 = GetAverageTicketLossRate(2, !EnableTicketLossRateLogging);
@@ -13242,7 +13274,7 @@ private void LogStatus(bool isFinal, int level) {
         if (level >= useLevel) DebugWrite("^bStatus^n: Ticket difference = " + ticketGap + ", average ticket loss = " + a1.ToString("F2") + "(US) vs " + a2.ToString("F2") + " (RU)" + " for " + perMode.TicketLossSampleCount + " samples, ratio is " + rat.ToString("F0") + "%", 0);
     } else if (!IsSQDM() && fServerInfo.GameMode != "GunMaster0")  {
         double a1 = fTickets[1];
-        double a2 = (IsRush()) ? (Math.Max(fTickets[1]/2, fMaxTickets - (fRushMaxTickets - fTickets[2]))) : fTickets[2];
+        double a2 = (IsRush()) ? (Math.Max(fTickets[1]/2, Math.Round(CorrectionFactor * (fMaxTickets - (fRushMaxTickets - fTickets[2])),0))) : fTickets[2];
         double rat = (a1 > a2) ? (a1/Math.Max(1, a2)) : (a2/Math.Max(1, a1));
         // For end of round, use standard function for ratio
         if (fTickets[1] < 1 || fTickets[2] < 1) {
