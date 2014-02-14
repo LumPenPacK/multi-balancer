@@ -4103,7 +4103,8 @@ public override void OnServerInfo(CServerInfo serverInfo) {
                     DebugWrite("^7serverInfo: stage " + fRushStage + " in progress!", 7);
                 }
             } else if (attacker > fRushPrevAttackerTickets
-            && (attacker - fRushPrevAttackerTickets) >= Math.Min(12, 2 * perMode.SecondsToCheckForNewStage / 5) // might be not 100% reliable, not every new stage can be detected
+            && (attacker - fRushPrevAttackerTickets) >= Math.Min(12, 2 * perMode.SecondsToCheckForNewStage / 5)  // might be not 100% reliable, not every new stage can be detected
+            && AttackerTicketsWithinRangeOfMax(attacker)
             && fRushStage < 5) {
                 fStageInProgress = false;
                 
