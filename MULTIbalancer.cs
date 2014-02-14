@@ -237,8 +237,8 @@ public class MULTIbalancer : PRoConPluginAPI, IPRoConPluginInterface
                     Stage3TicketPercentageToUnstackAdjustment = 80;
                     Stage4And5TicketPercentageToUnstackAdjustment = -120;
                     SecondsToCheckForNewStage = 10;
-					MinimumCorrectionFactor = 0.6;
-					MinimumAttackerTicketsLostPerStage = 0.45;
+                    MinimumCorrectionFactor = 0.6;
+                    MinimumAttackerTicketsLostPerStage = 0.45;
                     break;
                 case "Squad Deathmatch":
                     MaxPlayers = (isBF4) ? 20 : 16;
@@ -293,9 +293,9 @@ public class MULTIbalancer : PRoConPluginAPI, IPRoConPluginInterface
                     Stage3TicketPercentageToUnstackAdjustment = 80;
                     Stage4And5TicketPercentageToUnstackAdjustment = -120;
                     SecondsToCheckForNewStage = 10;
-					MinimumCorrectionFactor = 0.60;
-					MinimumAttackerTicketsLostPerStage = 0.45; 
-					break;
+                    MinimumCorrectionFactor = 0.60;
+                    MinimumAttackerTicketsLostPerStage = 0.45; 
+                    break;
                 case "Gun Master":
                     MaxPlayers = 16;
                     CheckTeamStackingAfterFirstMinutes = 2;
@@ -377,9 +377,9 @@ public class MULTIbalancer : PRoConPluginAPI, IPRoConPluginInterface
         public double Stage3TicketPercentageToUnstackAdjustment = 0;
         public double Stage4And5TicketPercentageToUnstackAdjustment = 0;
         public double SecondsToCheckForNewStage = 10;
-		public double MinimumCorrectionFactor = 0.25;
-		public double MinimumAttackerTicketsLostPerStage = 0.50;
-		        
+        public double MinimumCorrectionFactor = 0.25;
+        public double MinimumAttackerTicketsLostPerStage = 0.50;
+                
         public bool isDefault = true; // not a setting
     } // end PerModeSettings
 
@@ -1249,7 +1249,7 @@ public MULTIbalancer() {
     fRevealSettings = false;
     fShowRiskySettings = false;
     fLastFastMoveTimestamp = DateTime.MinValue;
-	CorrectionFactor = 1;
+    CorrectionFactor = 1;
     
     /* Settings */
 
@@ -2004,10 +2004,10 @@ public List<CPluginVariable> GetDisplayPluginVariables() {
                 lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Stage 4 And 5 Ticket Percentage To Unstack Adjustment", oneSet.Stage4And5TicketPercentageToUnstackAdjustment.GetType(), oneSet.Stage4And5TicketPercentageToUnstackAdjustment));
                 
                 lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Seconds To Check For New Stage", oneSet.SecondsToCheckForNewStage.GetType(), oneSet.SecondsToCheckForNewStage));
-				
-				lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Minimum Correction Factor", oneSet.MinimumCorrectionFactor.GetType(), oneSet.MinimumCorrectionFactor));
-				
-				lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Minimum Attacker Tickets Lost Per Stage", oneSet.MinimumAttackerTicketsLostPerStage.GetType(), oneSet.MinimumAttackerTicketsLostPerStage));
+                
+                lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Minimum Correction Factor", oneSet.MinimumCorrectionFactor.GetType(), oneSet.MinimumCorrectionFactor));
+                
+                lstReturn.Add(new CPluginVariable("8 - Settings for " + sm + "|" + sm + ": " + "Minimum Attacker Tickets Lost Per Stage", oneSet.MinimumAttackerTicketsLostPerStage.GetType(), oneSet.MinimumAttackerTicketsLostPerStage));
             }
 
             if (isConquest) {
@@ -2316,8 +2316,8 @@ procon.protected.plugins.setVariable "MULTIbalancer" "1 - Settings|Whitelist" "A
 procon.protected.plugins.setVariable "MULTIbalancer" "1 - Settings|Friends List" "AAA BBB CCC|XXX YYY ZZZ|Able Baker|Charlie Delta"
 procon.protected.plugins.setVariable "MULTIbalancer" "1 - Settings|Disperse Evenly List" "1 AAA BBB CCC|2 XXX YYY ZZZ|Able|Baker|Charlie|Delta"
 
-Command: 	procon.protected.plugins.setVariable <string: classname> <string: variablename> <string: value>
-Effect: 	Sets <classname> plugin’s <variablename> to <value>
+Command:     procon.protected.plugins.setVariable <string: classname> <string: variablename> <string: value>
+Effect:     Sets <classname> plugin’s <variablename> to <value>
 
 */
 
@@ -2438,13 +2438,13 @@ private bool ValidateSettings(String strVariable, String strValue) {
                     perMode.DefinitionOfEarlyPhaseFromStart = maxMinutes - perMode.DefinitionOfLatePhaseFromEnd;
                 }
             } 
-			else if (mode == "Rush" || mode == "Squad Rush") {
-				if (strVariable.Contains("Seconds To Check For New Stage")) ValidateDoubleRange(ref perMode.SecondsToCheckForNewStage, mode + ":" + "Seconds To Check For New Stage", 5, 30, def.SecondsToCheckForNewStage, false);
-				else if (strVariable.Contains("Minimum Correction Factor")) ValidateDoubleRange(ref perMode.MinimumCorrectionFactor, mode + ":" + "Minimum Correction Factor", 0.1, 1.0, def.MinimumCorrectionFactor, false);
-				else if (strVariable.Contains("Minimum Attacker Tickets Lost Per Stage")) ValidateDoubleRange(ref perMode.MinimumAttackerTicketsLostPerStage, mode + ":" + "Minimum Attacker Tickets Lost Per Stage", 0, 0.9, def.MinimumAttackerTicketsLostPerStage, false);
+            else if (mode == "Rush" || mode == "Squad Rush") {
+                if (strVariable.Contains("Seconds To Check For New Stage")) ValidateDoubleRange(ref perMode.SecondsToCheckForNewStage, mode + ":" + "Seconds To Check For New Stage", 5, 30, def.SecondsToCheckForNewStage, false);
+                else if (strVariable.Contains("Minimum Correction Factor")) ValidateDoubleRange(ref perMode.MinimumCorrectionFactor, mode + ":" + "Minimum Correction Factor", 0.1, 1.0, def.MinimumCorrectionFactor, false);
+                else if (strVariable.Contains("Minimum Attacker Tickets Lost Per Stage")) ValidateDoubleRange(ref perMode.MinimumAttackerTicketsLostPerStage, mode + ":" + "Minimum Attacker Tickets Lost Per Stage", 0, 0.9, def.MinimumAttackerTicketsLostPerStage, false);
             }
         }
-		
+        
 
         /* ===== SECTION 9 - Debug Settings ===== */
 
@@ -4054,9 +4054,9 @@ public override void OnServerInfo(CServerInfo serverInfo) {
                 if (attacker < fRushPrevAttackerTickets && attacker > 0) {
                     fRushAttackerStageLoss = fRushAttackerStageLoss + (fRushPrevAttackerTickets - attacker);
                     ++fRushAttackerStageSamples;
-					// Disable Correction Factor when attackers have lost the minimum tickets on the new stage
-					if (fRushPrevAttackerTickets <= (fMaxTickets * (1-perMode.MinimumAttackerTicketsLostPerStage)))
-					CorrectionFactor = 1;
+                    // Disable Correction Factor when attackers have lost the minimum tickets on the new stage
+                    if (fRushPrevAttackerTickets <= (fMaxTickets * (1-perMode.MinimumAttackerTicketsLostPerStage)))
+                    CorrectionFactor = 1;
                 }
             }
             String avl = String.Empty;
@@ -4106,16 +4106,16 @@ public override void OnServerInfo(CServerInfo serverInfo) {
             && (attacker - fRushPrevAttackerTickets) >= Math.Min(12, 2 * perMode.SecondsToCheckForNewStage / 5) // might be not 100% reliable, not every new stage can be detected
             && fRushStage < 5) {
                 fStageInProgress = false;
-				
-				// Check Minimum Ticket lost
-				if (fRushPrevAttackerTickets >= (fMaxTickets * (1-perMode.MinimumAttackerTicketsLostPerStage))) {  // Example: MinimumAttackerTicketsLostPerStage = 0.9 means Attackers have lost 90% of their tickets --> (100%-90%)= 10% remains
-					CorrectionFactor = perMode.MinimumCorrectionFactor + (( (fMaxTickets - fRushPrevAttackerTickets) / (fMaxTickets * perMode.MinimumAttackerTicketsLostPerStage))*(1-perMode.MinimumCorrectionFactor));
-					CorrectionFactor =  Math.Round(CorrectionFactor, 2);
-					// Extreme Case 1: Attackers have lost "MinimumAttackerTicketsLostPerStage" tickets in a stage or more --- > Correction Factor = 1 ---> Defender tickets will not be changed
-					// Extreme Case 2: Attackers have lost 0 tickets in a stage	--- > Correction Factor = MinimumCorrectionFactor (Def 0.25) ---> Defender tickets will be changed to 0.25 * MaxTickets on the new stage
-				}
-				else CorrectionFactor = 1;
-				
+                
+                // Check Minimum Ticket lost
+                if (fRushPrevAttackerTickets >= (fMaxTickets * (1-perMode.MinimumAttackerTicketsLostPerStage))) {  // Example: MinimumAttackerTicketsLostPerStage = 0.9 means Attackers have lost 90% of their tickets --> (100%-90%)= 10% remains
+                    CorrectionFactor = perMode.MinimumCorrectionFactor + (( (fMaxTickets - fRushPrevAttackerTickets) / (fMaxTickets * perMode.MinimumAttackerTicketsLostPerStage))*(1-perMode.MinimumCorrectionFactor));
+                    CorrectionFactor =  Math.Round(CorrectionFactor, 2);
+                    // Extreme Case 1: Attackers have lost "MinimumAttackerTicketsLostPerStage" tickets in a stage or more --- > Correction Factor = 1 ---> Defender tickets will not be changed
+                    // Extreme Case 2: Attackers have lost 0 tickets in a stage    --- > Correction Factor = MinimumCorrectionFactor (Def 0.25) ---> Defender tickets will be changed to 0.25 * MaxTickets on the new stage
+                }
+                else CorrectionFactor = 1;
+                
                 fRushMaxTickets = defender;
                 fMaxTickets = attacker;
                 fRushPrevAttackerTickets = attacker;
@@ -9365,7 +9365,7 @@ private void Reset() {
     fUpdateTicketsRequest = null;
     fTotalRoundEndingRounds = 0;
     fTotalRoundEndingSeconds = 0;
-	CorrectionFactor = 1;
+    CorrectionFactor = 1;
 
     fDebugScramblerBefore[0].Clear();
     fDebugScramblerBefore[1].Clear();
@@ -9421,7 +9421,7 @@ private void ResetRound() {
     fTotalQuits = 0;
     fGrandRageQuits = fGrandRageQuits + fRageQuits;
     fRageQuits = 0;
-	CorrectionFactor = 1;
+    CorrectionFactor = 1;
 
     fLastBalancedTimestamp = DateTime.MinValue;
 
@@ -13031,12 +13031,12 @@ public void LaunchCheckForPluginUpdate() {
 
 
 public void CheckForPluginUpdate() { // runs in one-shot thread
-	try {
+    try {
         lock (fUpdateThreadLock) {
             fUpdateThreadLock.MaxDelay = fUpdateThreadLock.MaxDelay + 1;
             fUpdateThreadLock.LastUpdate = DateTime.Now;
         }
-		XmlDocument xml = new XmlDocument();
+        XmlDocument xml = new XmlDocument();
         try {
             xml.Load("https://myrcon.com/procon/plugins/report/format/xml/plugin/MULTIbalancer");
         } catch (System.Security.SecurityException e) {
@@ -13080,7 +13080,7 @@ public void CheckForPluginUpdate() { // runs in one-shot thread
         if (DebugLevel >= 8) ConsoleDebug("CheckForPluginUpdate: # rows = " + rows.Count);
         if (rows.Count == 0) return;
         Dictionary<String,int> versions = new Dictionary<String,int>();
-		foreach (XmlNode tr in rows) {
+        foreach (XmlNode tr in rows) {
             XmlNode ver = tr.SelectSingleNode("version");
             //XmlNode count = tr.SelectSingleNode("sum_in_use");
             XmlNode count = tr.SelectSingleNode("max_in_use");
@@ -13165,9 +13165,9 @@ public void CheckForPluginUpdate() { // runs in one-shot thread
     } catch (ThreadAbortException) {
         fAborted = true;
         return;
-	} catch (Exception e) {
-		if (!fAborted) ConsoleException(e);
-	} finally {
+    } catch (Exception e) {
+        if (!fAborted) ConsoleException(e);
+    } finally {
         if (!fAborted) {
             // Update check time
             fLastVersionCheckTimestamp = DateTime.Now;
@@ -13216,8 +13216,8 @@ private void LogStatus(bool isFinal, int level) {
     String tm = fTickets[1] + "/" + fTickets[2];
     if (IsSQDM()) tm = tm + "/" + fTickets[3] + "/" + fTickets[4];
     if (IsRush()) {
-		tm = tm  + "(" + Math.Max(fTickets[1]/2, ((fMaxTickets - (fRushMaxTickets - fTickets[2])))) + "[*" + Math.Round(CorrectionFactor * (fMaxTickets - (fRushMaxTickets - fTickets[2])),0) + "*])";
-	}
+        tm = tm  + "(" + Math.Max(fTickets[1]/2, ((fMaxTickets - (fRushMaxTickets - fTickets[2])))) + "[*" + Math.Round(CorrectionFactor * (fMaxTickets - (fRushMaxTickets - fTickets[2])),0) + "*])";
+    }
     if (IsCTF()) tm = GetTeamPoints(1) + "/" + GetTeamPoints(2);
 
     double goal = 0;
